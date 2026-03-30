@@ -1,0 +1,74 @@
+-- =============================================================================
+-- Migration 15：多租户用户管理 + 审计日志
+-- 执行时机：API 启动时自动执行；Python post-hook 负责数据迁移与「公开」组织初始化
+-- =============================================================================
+
+-- -----------------------------------------------------------------------------
+-- 组织表：存储组织名称、描述
+-- -----------------------------------------------------------------------------
+DEFINE TABLE IF NOT EXISTS organization SCHEMAFULL;
+DEFINE FIELD IF NOT EXISTS name ON TABLE organization TYPE string;
+DEFINE FIELD IF NOT EXISTS description ON TABLE organization TYPE option<string>;
+DEFINE FIELD IF NOT EXISTS created ON organization DEFAULT time::now() VALUE $before OR time::now();
+DEFINE FIELD IF NOT EXISTS updated ON organization DEFAULT time::now() VALUE time::now();
+
+-- -----------------------------------------------------------------------------
+-- 应用用户表：与 SurrealDB 内置用户分离，支持登录、角色、状态
+-- org_id 已弃用，由 member_of 表维护多组织关系
+-- -----------------------------------------------------------------------------
+DEFINE TABLE IF NOT EXISTS app_user SCHEMAFULL;
+DEFINE FIELD IF NOT EXISTS username ON TABLE app_user TYPE string;
+DEFINE FIELD IF NOT EXISTS email ON TABLE app_user TYPE string;
+DEFINE FIELD IF NOT EXISTS password_hash ON TABLE app_user TYPE string;
+DEFINE FIELD IF NOT EXISTS role ON TABLE app_user TYPE string DEFAULT 'user';
+DEFINE FIELD IF NOT EXISTS status ON TABLE app_user TYPE string DEFAULT 'pending';
+DEFINE FIELD IF NOT EXISTS org_id ON TABLE app_user TYPE option<record<organization>>;
+DEFINE FIELD IF NOT EXISTS created ON app_user DEFAULT time::now() VALUE $before OR time::now();
+DEFINE FIELD IF NOT EXISTS updated ON app_user DEFAULT time::now() VALUE time::now();
+
+DEFINE INDEX IF NOT EXISTS idx_app_user_email ON TABLE app_user COLUMNS email UNIQUE;
+DEFINE INDEX IF NOT EXISTS idx_app_user_username ON TABLE app_user COLUMNS username UNIQUE;
+
+-- -----------------------------------------------------------------------------
+-- 多对多成员关系表：用户-组织，支持组内角色 member/org_admin
+-- -----------------------------------------------------------------------------
+DEFINE TABLE IF NOT EXISTS member_of SCHEMAFULL;
+DEFINE FIELD IF NOT EXISTS in ON TABLE member_of TYPE record<app_user>;
+DEFINE FIELD IF NOT EXISTS out ON TABLE member_of TYPE record<organization>;
+DEFINE FIELD IF NOT EXISTS role ON TABLE member_of TYPE string DEFAULT 'member';
+DEFINE FIELD IF NOT EXISTS created ON member_of DEFAULT time::now() VALUE $before OR time::now();
+DEFINE INDEX IF NOT EXISTS idx_member_of_unique ON TABLE member_of COLUMNS in, out UNIQUE;
+
+-- -----------------------------------------------------------------------------
+-- notebook：组织隔离 + 个人归属 + 多组织关联
+-- org_id 已弃用，由 org_ids 主用；user_id 记录创建者
+-- -----------------------------------------------------------------------------
+DEFINE FIELD IF NOT EXISTS org_id ON TABLE notebook TYPE option<record<organization>>;
+DEFINE FIELD IF NOT EXISTS user_id ON TABLE notebook TYPE option<record<app_user>>;
+DEFINE FIELD IF NOT EXISTS org_ids ON TABLE notebook TYPE option<array>;
+DEFINE FIELD IF NOT EXISTS org_ids.* ON TABLE notebook TYPE record<organization>;
+
+-- -----------------------------------------------------------------------------
+-- source：组织隔离 + 个人归属
+-- -----------------------------------------------------------------------------
+DEFINE FIELD IF NOT EXISTS org_id ON TABLE source TYPE option<record<organization>>;
+DEFINE FIELD IF NOT EXISTS user_id ON TABLE source TYPE option<record<app_user>>;
+
+-- -----------------------------------------------------------------------------
+-- 审计日志表：记录管理员操作（用户/组织/成员变更、登录等）
+-- -----------------------------------------------------------------------------
+DEFINE TABLE IF NOT EXISTS audit_log SCHEMAFULL;
+DEFINE FIELD IF NOT EXISTS operator_id ON TABLE audit_log TYPE option<record<app_user>>;
+DEFINE FIELD IF NOT EXISTS operator_name ON TABLE audit_log TYPE string;
+DEFINE FIELD IF NOT EXISTS action ON TABLE audit_log TYPE string;
+DEFINE FIELD IF NOT EXISTS resource_type ON TABLE audit_log TYPE string;
+DEFINE FIELD IF NOT EXISTS resource_id ON TABLE audit_log TYPE option<string>;
+DEFINE FIELD IF NOT EXISTS resource_name ON TABLE audit_log TYPE option<string>;
+DEFINE FIELD IF NOT EXISTS detail ON TABLE audit_log TYPE option<string>;
+DEFINE FIELD IF NOT EXISTS ip ON TABLE audit_log TYPE option<string>;
+DEFINE FIELD IF NOT EXISTS created ON TABLE audit_log DEFAULT time::now() VALUE $before OR time::now();
+
+DEFINE INDEX IF NOT EXISTS idx_audit_log_created ON TABLE audit_log COLUMNS created;
+DEFINE INDEX IF NOT EXISTS idx_audit_log_operator_id ON TABLE audit_log COLUMNS operator_id;
+DEFINE INDEX IF NOT EXISTS idx_audit_log_action ON TABLE audit_log COLUMNS action;
+DEFINE INDEX IF NOT EXISTS idx_audit_log_resource ON TABLE audit_log COLUMNS resource_type;

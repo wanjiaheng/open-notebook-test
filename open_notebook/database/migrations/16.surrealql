@@ -1,0 +1,33 @@
+-- =============================================================================
+-- Migration 16：兼容补全（仅对旧版 15 生效）
+-- 若已执行汇总后的 15，本迁移为幂等空操作（IF NOT EXISTS）
+-- =============================================================================
+
+DEFINE TABLE IF NOT EXISTS member_of SCHEMAFULL;
+DEFINE FIELD IF NOT EXISTS in ON TABLE member_of TYPE record<app_user>;
+DEFINE FIELD IF NOT EXISTS out ON TABLE member_of TYPE record<organization>;
+DEFINE FIELD IF NOT EXISTS role ON TABLE member_of TYPE string DEFAULT 'member';
+DEFINE FIELD IF NOT EXISTS created ON member_of DEFAULT time::now() VALUE $before OR time::now();
+DEFINE INDEX IF NOT EXISTS idx_member_of_unique ON TABLE member_of COLUMNS in, out UNIQUE;
+
+DEFINE FIELD IF NOT EXISTS user_id ON TABLE notebook TYPE option<record<app_user>>;
+DEFINE FIELD IF NOT EXISTS user_id ON TABLE source TYPE option<record<app_user>>;
+
+DEFINE FIELD IF NOT EXISTS org_ids ON TABLE notebook TYPE option<array>;
+DEFINE FIELD IF NOT EXISTS org_ids.* ON TABLE notebook TYPE record<organization>;
+
+DEFINE TABLE IF NOT EXISTS audit_log SCHEMAFULL;
+DEFINE FIELD IF NOT EXISTS operator_id ON TABLE audit_log TYPE option<record<app_user>>;
+DEFINE FIELD IF NOT EXISTS operator_name ON TABLE audit_log TYPE string;
+DEFINE FIELD IF NOT EXISTS action ON TABLE audit_log TYPE string;
+DEFINE FIELD IF NOT EXISTS resource_type ON TABLE audit_log TYPE string;
+DEFINE FIELD IF NOT EXISTS resource_id ON TABLE audit_log TYPE option<string>;
+DEFINE FIELD IF NOT EXISTS resource_name ON TABLE audit_log TYPE option<string>;
+DEFINE FIELD IF NOT EXISTS detail ON TABLE audit_log TYPE option<string>;
+DEFINE FIELD IF NOT EXISTS ip ON TABLE audit_log TYPE option<string>;
+DEFINE FIELD IF NOT EXISTS created ON TABLE audit_log DEFAULT time::now() VALUE $before OR time::now();
+
+DEFINE INDEX IF NOT EXISTS idx_audit_log_created ON TABLE audit_log COLUMNS created;
+DEFINE INDEX IF NOT EXISTS idx_audit_log_operator_id ON TABLE audit_log COLUMNS operator_id;
+DEFINE INDEX IF NOT EXISTS idx_audit_log_action ON TABLE audit_log COLUMNS action;
+DEFINE INDEX IF NOT EXISTS idx_audit_log_resource ON TABLE audit_log COLUMNS resource_type;

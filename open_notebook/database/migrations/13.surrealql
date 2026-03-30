@@ -1,0 +1,3 @@
+-- Migration 13: 将 source_insight / note 的 embedding 字段改为可选
+DEFINE FIELD OVERWRITE embedding ON TABLE source_insight TYPE option<array<float>>;
+DEFINE FIELD OVERWRITE embedding ON TABLE note TYPE option<array<float>>;

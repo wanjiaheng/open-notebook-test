@@ -1,0 +1,2 @@
+-- Migration 2: 为 note 表添加 note_type 字段
+DEFINE FIELD IF NOT EXISTS note_type ON TABLE note TYPE option<string>;

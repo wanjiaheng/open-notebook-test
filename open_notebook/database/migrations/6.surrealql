@@ -1,0 +1,2 @@
+-- Migration 6: 统一 provider 命名 vertexai -> vertex
+update model set provider='vertex' where provider='vertexai';

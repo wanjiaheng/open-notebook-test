@@ -1,0 +1,22 @@
+-- =============================================================================
+-- Migration 15 回滚：移除多租户与审计日志相关表及字段
+-- 执行顺序：先删依赖表/字段，再删主表
+-- =============================================================================
+
+REMOVE TABLE IF EXISTS audit_log;
+
+REMOVE FIELD IF EXISTS org_ids ON TABLE notebook;
+
+REMOVE TABLE IF EXISTS member_of;
+
+REMOVE FIELD IF EXISTS user_id ON TABLE notebook;
+REMOVE FIELD IF EXISTS user_id ON TABLE source;
+
+REMOVE FIELD IF EXISTS org_id ON TABLE notebook;
+REMOVE FIELD IF EXISTS org_id ON TABLE source;
+
+REMOVE INDEX IF EXISTS idx_app_user_email ON TABLE app_user;
+REMOVE INDEX IF EXISTS idx_app_user_username ON TABLE app_user;
+REMOVE TABLE IF EXISTS app_user;
+
+REMOVE TABLE IF EXISTS organization;

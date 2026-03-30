@@ -1,0 +1,12 @@
+-- Migration 8: 支持 chat_session 关联 notebook 或 source
+-- refers_to 改为 RELATION FROM chat_session TO notebook|source
+-- 新增 chat_session.model_override、source.command 字段
+
+DEFINE TABLE OVERWRITE refers_to
+TYPE RELATION 
+FROM chat_session TO notebook|source;
+
+-- Add model_override field to chat_session for per-session model selection
+DEFINE FIELD model_override ON chat_session TYPE option<string>;
+
+DEFINE FIELD command ON source TYPE option<record<command>>;

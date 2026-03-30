@@ -1,0 +1,6 @@
+-- Migration 16 回滚（仅当 15 为汇总版时，16 独立回滚用）
+REMOVE TABLE IF EXISTS audit_log;
+REMOVE FIELD IF EXISTS org_ids ON TABLE notebook;
+REMOVE TABLE IF EXISTS member_of;
+REMOVE FIELD IF EXISTS user_id ON TABLE notebook;
+REMOVE FIELD IF EXISTS user_id ON TABLE source;
