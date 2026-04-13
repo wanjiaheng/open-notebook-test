@@ -59,6 +59,7 @@ const getNavigation = (t: TranslationKeys, isAdmin = false) => [
     title: t.navigation.process,
     items: [
       { name: t.navigation.notebooks, href: '/notebooks', icon: Book },
+      { name: t.navigation.agents, href: '/agents', icon: Bot },
       { name: t.navigation.askAndSearch, href: '/search', icon: Search },
     ],
   },

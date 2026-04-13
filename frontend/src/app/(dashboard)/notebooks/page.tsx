@@ -14,6 +14,7 @@ import { useTranslation } from '@/lib/hooks/use-translation'
 import { useAuthStore, MembershipInfo } from '@/lib/stores/auth-store'
 import { NotebookResponse } from '@/lib/types/api'
 import { organizationsApi, PUBLIC_ORG_NAME } from '@/lib/api/organizations'
+import { parseAgentMeta } from '@/lib/agents/agent-meta'
 import {
   Select,
   SelectContent,
@@ -50,7 +51,7 @@ export default function NotebooksPage() {
 
   const filteredActive = useMemo(() => {
     if (!notebooks) return undefined
-    let filtered = notebooks
+    let filtered = notebooks.filter((nb) => !parseAgentMeta(nb.description).isAgent)
     if (normalizedQuery) filtered = filtered.filter((nb) => matchesSearch(nb, normalizedQuery))
     filtered = filtered.filter(matchesOrg)
     return filtered
@@ -58,7 +59,7 @@ export default function NotebooksPage() {
 
   const filteredArchived = useMemo(() => {
     if (!archivedNotebooks) return undefined
-    let filtered = archivedNotebooks
+    let filtered = archivedNotebooks.filter((nb) => !parseAgentMeta(nb.description).isAgent)
     if (normalizedQuery) filtered = filtered.filter((nb) => matchesSearch(nb, normalizedQuery))
     filtered = filtered.filter(matchesOrg)
     return filtered
