@@ -10,7 +10,7 @@ export function parseAgentMeta(description?: string | null): {
   published: boolean
   plainDescription: string
 } {
-  const raw = description ?? ''
+  const raw = typeof description === 'string' ? description : ''
   if (!raw.startsWith(AGENT_META_PREFIX)) {
     return { isAgent: false, published: false, plainDescription: raw }
   }

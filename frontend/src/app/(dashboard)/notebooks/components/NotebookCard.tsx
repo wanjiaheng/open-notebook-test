@@ -78,6 +78,7 @@ export function NotebookCard({ notebook }: NotebookCardProps) {
   }, [publicOrg, orgs, memberships, superAdmin])
 
   const [editOrgIds, setEditOrgIds] = useState<Set<string>>(new Set())
+  const notebookOrgs = Array.isArray(notebook.orgs) ? notebook.orgs : []
 
   const handleArchiveToggle = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -92,7 +93,7 @@ export function NotebookCard({ notebook }: NotebookCardProps) {
   }
 
   const openOrgDialog = () => {
-    setEditOrgIds(new Set(notebook.orgs.map(o => o.id)))
+    setEditOrgIds(new Set(notebookOrgs.map(o => o.id)))
     // Defer opening so DropdownMenu can fully close and clean up first, avoiding focus/click conflicts
     setTimeout(() => setShowOrgDialog(true), 50)
   }
@@ -197,8 +198,8 @@ export function NotebookCard({ notebook }: NotebookCardProps) {
 
             {/* Org badges */}
             <div className="mt-2 flex items-center gap-1 flex-wrap">
-              {notebook.orgs.length > 0 ? (
-                notebook.orgs.map(o => (
+              {notebookOrgs.length > 0 ? (
+                notebookOrgs.map(o => (
                   <Badge key={o.id} variant="outline" className="text-[10px] px-1.5 py-0 gap-1 font-normal">
                     {o.name === PUBLIC_ORG_NAME ? (
                       <Globe className="h-2.5 w-2.5" />

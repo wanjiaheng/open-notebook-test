@@ -35,18 +35,22 @@ export default function NotebooksPage() {
   const memberships: MembershipInfo[] = user?.memberships ?? []
 
   const normalizedQuery = searchTerm.trim().toLowerCase()
+  const getNotebookOrgs = (notebook: NotebookResponse) =>
+    Array.isArray(notebook.orgs) ? notebook.orgs : []
 
   const matchesSearch = (notebook: NotebookResponse, query: string) => {
+    const notebookOrgs = getNotebookOrgs(notebook)
     return notebook.name.toLowerCase().includes(query)
-      || notebook.description.toLowerCase().includes(query)
+      || (notebook.description || '').toLowerCase().includes(query)
       || (notebook.creator_name?.toLowerCase().includes(query) ?? false)
-      || notebook.orgs.some(o => o.name.toLowerCase().includes(query))
+      || notebookOrgs.some(o => o.name.toLowerCase().includes(query))
   }
 
   const matchesOrg = (notebook: NotebookResponse) => {
+    const notebookOrgs = getNotebookOrgs(notebook)
     if (orgFilter === '__all__') return true
-    if (orgFilter === '__personal__') return notebook.orgs.length === 0
-    return notebook.orgs.some(o => o.id === orgFilter)
+    if (orgFilter === '__personal__') return notebookOrgs.length === 0
+    return notebookOrgs.some(o => o.id === orgFilter)
   }
 
   const filteredActive = useMemo(() => {
@@ -78,7 +82,7 @@ export default function NotebooksPage() {
     }
     const all = [...(notebooks || []), ...(archivedNotebooks || [])]
     for (const nb of all) {
-      for (const o of nb.orgs) {
+      for (const o of getNotebookOrgs(nb)) {
         if (!seen.has(o.id)) {
           seen.add(o.id)
           options.push({ id: o.id, name: o.name })
